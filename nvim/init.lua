@@ -10,7 +10,7 @@ if not (vim.uv or vim.loop).fs_stat(lazypath) then
 			{ "\nPress any key to exit..." },
 		}, true, {})
 		vim.fn.getchar()
-		os.exit(1)
+ 		os.exit(1)
 	end
 end
 vim.opt.rtp:prepend(lazypath)
@@ -21,7 +21,16 @@ vim.opt.rtp:prepend(lazypath)
 vim.g.mapleader = " "
 vim.g.maplocalleader = "\\"
 
+-- Options
+vim.opt.tabstop = 4
+vim.opt.softtabstop = 4
+vim.opt.shiftwidth = 4
+vim.opt.expandtab = true
+vim.opt.autoindent = true
+vim.opt.smartindent = true
 vim.opt.relativenumber = true
+vim.opt.number = true
+vim.opt.scrolloff = 15
 
 
 -- mappings
@@ -30,6 +39,35 @@ vim.keymap.set("v", "K", ":m '<-2<CR>gv=gv", { desc = "Move Line Up in Visual Mo
 vim.keymap.set("n", "<leader>w", ":w<CR>",   { desc = "Quick save" })
 vim.keymap.set('n', '<leader>ss', ':s/\\v',  { desc = "search and replace on line" })
 vim.keymap.set('n', '<leader>SS', ':%s/\\v', { desc = "search and replace in file" })
+vim.keymap.set('n', '<leader>e', ':lua MiniFiles.open()<CR>', { desc = "Open Mini Files navigation", silent = true })
+vim.keymap.set('n', '<C-d>', '<C-d>zz', { desc = "C-d with zz" })
+vim.keymap.set('n', '<C-u>', '<C-u>zz', { desc = "C-u with zz" })
+
+vim.keymap.set({ 'n', 'i' }, '<Up>', function () vim.notify("Use k", "info", { title = "Are you dumb?" }) end, { desc = "Disable Up key" })
+vim.keymap.set({ 'n', 'i' }, '<Down>', function () vim.notify("Use j", "info", { title = "Are you dumb?" }) end, { desc = "Disable Down key" })
+vim.keymap.set({ 'n', 'i' }, '<Left>', function () vim.notify("Use l", "info", { title = "Are you dumb?" }) end, { desc = "Disable Left key" })
+vim.keymap.set({ 'n', 'i' }, '<Right>', function () vim.notify("Use h", "info", { title = "Are you dumb?" }) end, { desc = "Disable Right key" })
+
+-- Splits
+vim.keymap.set("n", "<S-Tab>", "<C-w>w", { desc = "Cycle buffer" })
+vim.keymap.set("n", "<leader>c", ":close<CR>", { desc = "Close splitted buffer" })
+vim.keymap.set("n", "<leader>|", "<C-w>v", { desc = "Split vertical" })
+vim.keymap.set("n", "<leader>-", "<C-w>s", { desc = "Split horizaontal" })
+
+-- Tabs
+vim.keymap.set("n", "<leader>t", ":tabnew<CR>", { desc = "Create new tab" })
+vim.keymap.set("n", "<Tab>", ":tabnext<CR>", { desc = "Go to next tab" })
+
+-- Esc
+vim.keymap.set("t", "jj", "<C-\\><C-n>", { desc = "Leave insert mode", noremap = true })
+vim.keymap.set("i", "jj", "<ESC>", { desc = "Leave insert mode", noremap = true })
+
+-- LSP
+vim.keymap.set("n", "<F4>", "<Cmd>lua vim.lsp.buf.code_action()<CR>", { desc = "Execute code action" })
+vim.keymap.set("n", "<F3>", "<Cmd>lua vim.lsp.buf.format({async = true})<CR>", { desc = "Format file" })
+vim.keymap.set("n", "<F2>", "<Cmd>lua vim.lsp.buf.rename()<CR>", { desc = "Rename symbol" })
+
+vim.diagnostic.config({ virtual_text = true })
 
 -- Setup lazy.nvim
 require("lazy").setup({
@@ -108,7 +146,78 @@ require("lazy").setup({
 					desc = "Buffer Local Keymaps (which-key)",
 				},
 			},
-		}
+		},
+
+		{
+			'echasnovski/mini.nvim',
+			version = false,
+			config = function ()
+				require("mini.files").setup {}
+				require("mini.surround").setup {}
+                require("mini.pairs").setup {}
+			end
+		},
+
+		{
+			'Wansmer/treesj',
+			keys = {
+				'<space>m',
+				'<space>j',
+				'<space>s',
+			},
+			dependencies = { 'nvim-treesitter/nvim-treesitter' }, -- if you install parsers with `nvim-treesitter`
+			config = function ()
+				require("treesj").setup({})
+
+			end,
+		},
+
+		{
+			"nvim-treesitter/nvim-treesitter",
+			branch = 'master',
+			lazy = false,
+			build = ":TSUpdate",
+		},
+
+		{
+			'marko-cerovac/material.nvim',
+			config = function ()
+				require("material").setup({})
+				vim.cmd 'colorscheme material'
+				vim.g.material_style = 'darker'
+			end
+		},
+
+        {
+            'rcarriga/nvim-notify',
+            config = function ()
+                vim.notify = require("notify")
+            end
+        },
+
+        {
+            "karb94/neoscroll.nvim",
+            opts = {},
+        },
+
+        {
+            "f-person/git-blame.nvim",
+            -- load the plugin at startup
+            event = "VeryLazy",
+            -- Because of the keys part, you will be lazy loading this plugin.
+            -- The plugin will only load once one of the keys is used.
+            -- If you want to load the plugin at startup, add something like event = "VeryLazy",
+            -- or lazy = false. One of both options will work.
+            opts = {
+                -- your configuration comes here
+                -- for example
+                enabled = true,  -- if you want to enable the plugin
+                message_template = " <summary> • <date> • <author> • <<sha>>", -- template for the blame message, check the Message template section for more options
+                date_format = "%m-%d-%Y %H:%M:%S", -- template for the date, check Date format section for more options
+                virtual_text_column = 1,  -- virtual text start column, check Start virtual text at column section for more options
+            }
+
+        }
 	},
 	-- Configure any other settings here. See the documentation for more details.
 	-- colorscheme that will be used when installing plugins.
