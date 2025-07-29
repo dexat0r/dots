@@ -63,7 +63,7 @@ vim.keymap.set("n", "<leader>t", ":tabnew<CR>", { desc = "Create new tab" })
 vim.keymap.set("n", "<Tab>", ":tabnext<CR>", { desc = "Go to next tab" })
 
 -- Esc
-vim.keymap.set("t", "jj", "<C-\\><C-n>", { desc = "Leave insert mode", noremap = true })
+vim.keymap.set("t", "<ESC>", "<C-\\><C-n>", { desc = "Leave insert mode", noremap = true })
 vim.keymap.set("i", "jj", "<ESC>", { desc = "Leave insert mode", noremap = true })
 
 -- LSP
@@ -72,6 +72,9 @@ vim.keymap.set("n", "<F3>", "<Cmd>lua vim.lsp.buf.format({async = true})<CR>", {
 vim.keymap.set("n", "<F2>", "<Cmd>lua vim.lsp.buf.rename()<CR>", { desc = "Rename symbol" })
 
 vim.diagnostic.config({ virtual_text = true })
+
+-- Terminals
+vim.keymap.set({ "n", "t" }, "<C-\\>", "<Cmd>ToggleTerm<CR>", { desc = "Toggle terminal", silent = true })
 
 -- Setup lazy.nvim
 require("lazy").setup({
@@ -294,6 +297,69 @@ require("lazy").setup({
             },
             -- use opts = {} for passing setup options
             -- this is equivalent to setup({}) function
+        },
+
+        {
+            'akinsho/toggleterm.nvim',
+            version = "*",
+            config = function()
+                local Terminal = require('toggleterm.terminal').Terminal
+                local lzd      = Terminal:new({
+                    cmd = "lazydocker",
+                    dir = "git_dir",
+                    direction = "float",
+                    float_opts = {
+                        border = "double",
+                    },
+                    -- function to run on opening the terminal
+                    on_open = function(term)
+                        vim.cmd("startinsert!")
+                        vim.api.nvim_buf_set_keymap(term.bufnr, "n", "q", "<cmd>close<CR>",
+                            { noremap = true, silent = true })
+                    end,
+                    -- function to run on closing the terminal
+                    on_close = function()
+                        vim.cmd("startinsert!")
+                    end,
+                })
+
+                local lzg      = Terminal:new({
+                    cmd = "lazygit",
+                    dir = "git_dir",
+                    direction = "float",
+                    float_opts = {
+                        border = "double",
+                    },
+                    -- function to run on opening the terminal
+                    on_open = function(term)
+                        vim.cmd("startinsert!")
+                        vim.api.nvim_buf_set_keymap(term.bufnr, "n", "q", "<cmd>close<CR>",
+                            { noremap = true, silent = true })
+                    end,
+                    -- function to run on closing the terminal
+                    on_close = function()
+                        vim.cmd("startinsert!")
+                    end,
+                })
+
+                vim.api.nvim_create_user_command(
+                    "LzdToggle",
+                    function()
+                        lzd:toggle()
+                    end,
+                    {}
+                )
+
+                vim.api.nvim_create_user_command(
+                    "LzgToggle",
+                    function()
+                        lzg:toggle()
+                    end,
+                    {}
+                )
+
+                require('toggleterm').setup()
+            end
         }
     },
     -- Configure any other settings here. See the documentation for more details.
