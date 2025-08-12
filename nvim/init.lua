@@ -70,6 +70,7 @@ vim.keymap.set("i", "jj", "<ESC>", { desc = "Leave insert mode", noremap = true 
 vim.keymap.set("n", "<F4>", "<Cmd>lua vim.lsp.buf.code_action()<CR>", { desc = "Execute code action" })
 vim.keymap.set("n", "<F3>", "<Cmd>lua vim.lsp.buf.format({async = true})<CR>", { desc = "Format file" })
 vim.keymap.set("n", "<F2>", "<Cmd>lua vim.lsp.buf.rename()<CR>", { desc = "Rename symbol" })
+vim.keymap.set("n", "grd", "<Cmd>lua vim.lsp.buf.definition()<CR>", { desc = "Go to definition" })
 
 vim.diagnostic.config({ virtual_text = true })
 
@@ -360,6 +361,18 @@ require("lazy").setup({
 
                 require('toggleterm').setup()
             end
+        },
+
+        {
+            "Hoffs/omnisharp-extended-lsp.nvim"
+        },
+
+        {
+            "junegunn/vim-easy-align",
+            cmd = "EasyAlign",
+            keys = {
+                { "ga", "<Plug>(EasyAlign)", mode = { "n", "x" } },
+            }
         }
     },
     -- Configure any other settings here. See the documentation for more details.
