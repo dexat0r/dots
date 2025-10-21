@@ -54,7 +54,7 @@ vim.keymap.set({ 'n', 'i' }, '<Right>', function() vim.notify("Use h", "info", {
 
 -- Splits
 vim.keymap.set("n", "<S-Tab>", "<C-w>w", { desc = "Cycle buffer" })
-vim.keymap.set("n", "<leader>c", ":close<CR>", { desc = "Close splitted buffer" })
+vim.keymap.set("n", "<leader>c", ":close<CR>", { desc = "Close split buffer" })
 vim.keymap.set("n", "<leader>|", "<C-w>v", { desc = "Split vertical" })
 vim.keymap.set("n", "<leader>-", "<C-w>s", { desc = "Split horizaontal" })
 
@@ -77,10 +77,17 @@ vim.diagnostic.config({ virtual_text = true })
 -- Terminals
 vim.keymap.set({ "n", "t" }, "<C-\\>", "<Cmd>ToggleTerm<CR>", { desc = "Toggle terminal", silent = true })
 
+-- Autocommands
+vim.api.nvim_create_autocmd("User", {
+    pattern = "MiniFilesActionRename",
+    callback = function(event)
+        Snacks.rename.on_rename_file(event.data.from, event.data.to)
+    end,
+})
+
 -- Setup lazy.nvim
 require("lazy").setup({
     spec = {
-        -- add your plugins here
         {
             "mason-org/mason.nvim",
             opts = {}
@@ -90,56 +97,13 @@ require("lazy").setup({
             "mason-org/mason-lspconfig.nvim",
             opts = {},
             dependencies = {
-                { "mason-org/mason.nvim", opts = {} },
-                "neovim/nvim-lspconfig",
-            },
-        },
-
-        {
-            "neovim/nvim-lspconfig", -- REQUIRED: for native Neovim LSP integration
-            lazy = false,            -- REQUIRED: tell lazy.nvim to start this plugin at startup
-            dependencies = {
-                -- main one
-                { "ms-jpq/coq_nvim",       branch = "coq" },
-                -- 9000+ Snippets
-                { "ms-jpq/coq.artifacts",  branch = "artifacts" },
-                -- lua & third party sources -- See https://github.com/ms-jpq/coq.thirdparty
-                -- Need to **configure separately**
-                { 'ms-jpq/coq.thirdparty', branch = "3p" }
-                -- - shell repl
-                -- - nvim lua api
-                -- - scientific calculator
-                -- - comment banner
-                -- - etc
-            },
-            init = function()
-                vim.g.coq_settings = {
-                    auto_start = 'shut-up', -- if you want to start COQ at startup
-                    -- Your COQ settings here
-                }
-            end,
-            config = function()
-                local capabilities = vim.lsp.protocol.make_client_capabilities()
-                capabilities.textDocument.foldingRange = {
-                    dynamicRegistration = false,
-                    lineFoldingOnly = true
-                }
-                local language_servers = vim.lsp.get_clients() -- or list servers manually like {'gopls', 'clangd'}
-                for _, ls in ipairs(language_servers) do
-                    require('lspconfig')[ls].setup({
-                        capabilities = capabilities
-                        -- you can add other fields for setting up lsp server in this table
-                    })
-                end
-            end
+                "neovim/nvim-lspconfig"
+            }
         },
 
         {
             "xiyaowong/transparent.nvim",
             lazy = false,
-            config = function()
-                -- require('transparent').clear_prefix('lualine')
-            end
         },
 
         {
@@ -151,11 +115,7 @@ require("lazy").setup({
         {
             "folke/which-key.nvim",
             event = "VeryLazy",
-            opts = {
-                -- your configuration comes here
-                -- or leave it empty to use the default settings
-                -- refer to the configuration section below
-            },
+            opts = {},
             keys = {
                 {
                     "<leader>?",
@@ -373,11 +333,106 @@ require("lazy").setup({
             keys = {
                 { "ga", "<Plug>(EasyAlign)", mode = { "n", "x" } },
             }
+        },
+
+        {
+            'saghen/blink.cmp',
+            dependencies = { 'rafamadriz/friendly-snippets' },
+            version = '1.*',
+            opts = {}
+        },
+
+        {
+            'stevearc/conform.nvim',
+            event = { "BufWritePre" },
+            cmd = { "ConformInfo" },
+            opts = {
+                formatters_by_ft = {
+                    rust = { "rustfmt", lsp_format = "fallback" },
+                    ["*"] = { "codespell" },
+                },
+                format_on_save = {
+                    lsp_format = "fallback",
+                    timeout_ms = 500,
+                }
+            },
+        },
+
+        {
+            "folke/snacks.nvim",
+            lazy = false,
+            opts = {
+                input = {
+                    enabled = true
+                },
+                layout = {
+                    enabled = true
+                },
+                picker = {
+                    enabled = true
+                },
+                lazygit = {
+                    enabled = true
+                },
+                gitbrowse = {
+                    enabled = true
+                },
+                zen = {
+                    enabled = true
+                },
+                image = {
+                    enabled = true
+                }
+            },
+            keys = {
+                { "lzg",        function() Snacks.lazygit() end,   desc = "Open lazygit" },
+                { "<leader>gB", function() Snacks.gitbrowse() end, desc = "Git Browse",     mode = { "n", "v" } },
+                { "<leader>z",  function() Snacks.zen() end,       desc = "Toggle Zen Mode" },
+            }
+        },
+
+        {
+            "folke/trouble.nvim",
+            opts = {},
+            cmd = "Trouble",
+            keys = {
+                {
+                    "<leader>xx",
+                    "<cmd>Trouble diagnostics toggle focus=true<cr>",
+                    desc = "Diagnostics (Trouble)",
+                },
+                {
+                    "<leader>xX",
+                    "<cmd>Trouble diagnostics toggle filter.buf=0 focus=true<cr>",
+                    desc = "Buffer Diagnostics (Trouble)",
+                },
+                {
+                    "<leader>cs",
+                    "<cmd>Trouble symbols toggle focus=false<cr>",
+                    desc = "Symbols (Trouble)",
+                },
+                {
+                    "<leader>cl",
+                    "<cmd>Trouble lsp toggle focus=false win.position=right<cr>",
+                    desc = "LSP Definitions / references / ... (Trouble)",
+                },
+                {
+                    "<leader>xL",
+                    "<cmd>Trouble loclist toggle<cr>",
+                    desc = "Location List (Trouble)",
+                },
+                {
+                    "<leader>xQ",
+                    "<cmd>Trouble qflist toggle<cr>",
+                    desc = "Quickfix List (Trouble)",
+                },
+            },
         }
     },
-    -- Configure any other settings here. See the documentation for more details.
-    -- colorscheme that will be used when installing plugins.
     install = { colorscheme = { "habamax" } },
-    -- automatically check for plugin updates
     checker = { enabled = true },
+    change_detection = {
+        enabled = true,
+        notify = true
+    },
 })

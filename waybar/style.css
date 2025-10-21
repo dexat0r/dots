@@ -197,6 +197,10 @@ tooltip label{
     border-radius: 5px 0px 0px 5px;
 }
 
+#custom-outline {
+    border-radius: 5px 0px 0px 5px;
+}
+
 #custom-power {
     color: @red;
     border-radius: 0px 5px 5px 0px;
