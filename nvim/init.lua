@@ -32,14 +32,12 @@ vim.opt.relativenumber = true
 vim.opt.number = true
 vim.opt.scrolloff = 15
 
-
 -- mappings
 vim.keymap.set("v", "J", ":m '>+1<CR>gv=gv", { desc = "Move Line Down in Visual Mode" })
 vim.keymap.set("v", "K", ":m '<-2<CR>gv=gv", { desc = "Move Line Up in Visual Mode" })
 vim.keymap.set("n", "<leader>w", ":w<CR>", { desc = "Quick save" })
 vim.keymap.set('n', '<leader>ss', ':s/\\v', { desc = "search and replace on line" })
 vim.keymap.set('n', '<leader>SS', ':%s/\\v', { desc = "search and replace in file" })
-vim.keymap.set('n', '<leader>e', ':lua MiniFiles.open()<CR>', { desc = "Open Mini Files navigation", silent = true })
 vim.keymap.set('n', '<C-d>', '<C-d>zz', { desc = "C-d with zz" })
 vim.keymap.set('n', '<C-u>', '<C-u>zz', { desc = "C-u with zz" })
 
@@ -73,9 +71,6 @@ vim.keymap.set("n", "<F2>", "<Cmd>lua vim.lsp.buf.rename()<CR>", { desc = "Renam
 vim.keymap.set("n", "grd", "<Cmd>lua vim.lsp.buf.definition()<CR>", { desc = "Go to definition" })
 
 vim.diagnostic.config({ virtual_text = true })
-
--- Terminals
-vim.keymap.set({ "n", "t" }, "<C-\\>", "<Cmd>ToggleTerm<CR>", { desc = "Toggle terminal", silent = true })
 
 -- Autocommands
 vim.api.nvim_create_autocmd("User", {
@@ -133,21 +128,21 @@ require("lazy").setup({
             config = function()
                 require("mini.files").setup {}
                 require("mini.surround").setup {}
-                require('mini.starter').setup()
-            end
+            end,
+            keys = {
+                { "<leader>e", function() require("mini.files").open() end, desc = "Open Mini Files", mode = "n", silent = true }
+            }
         },
 
         {
             'Wansmer/treesj',
             keys = {
-                '<space>m',
-                '<space>j',
-                '<space>s',
+                "<space>m",
+                "<space>j",
+                "<space>s",
             },
             dependencies = { 'nvim-treesitter/nvim-treesitter' }, -- if you install parsers with `nvim-treesitter`
-            config = function()
-                require("treesj").setup({})
-            end,
+            opts = {},
         },
 
         {
@@ -168,10 +163,11 @@ require("lazy").setup({
 
         {
             'rcarriga/nvim-notify',
+            opts = {
+                background_colour = "#000000"
+            },
             config = function()
-                require("notify").setup({
-                    background_colour = "#000000"
-                })
+                vim.cmd([[ hi NotifyBackground guibg = #000000 ]])
                 vim.notify = require("notify")
             end
         },
@@ -183,15 +179,8 @@ require("lazy").setup({
 
         {
             "f-person/git-blame.nvim",
-            -- load the plugin at startup
             event = "VeryLazy",
-            -- Because of the keys part, you will be lazy loading this plugin.
-            -- The plugin will only load once one of the keys is used.
-            -- If you want to load the plugin at startup, add something like event = "VeryLazy",
-            -- or lazy = false. One of both options will work.
             opts = {
-                -- your configuration comes here
-                -- for example
                 enabled = true, -- if you want to enable the plugin
                 message_template = " <summary> • <date> • <author> • <<sha>>", -- template for the blame message, check the Message template section for more options
                 date_format = "%m-%d-%Y %H:%M:%S", -- template for the date, check Date format section for more options
@@ -205,6 +194,7 @@ require("lazy").setup({
             dependencies = {
                 'kevinhwang91/promise-async'
             },
+            opts = {},
             config = function()
                 vim.o.foldcolumn = '1' -- '0' is not bad
                 vim.o.foldlevel = 99   -- Using ufo provider need a large value, feel free to decrease the value
@@ -213,8 +203,18 @@ require("lazy").setup({
 
                 vim.keymap.set('n', 'zR', require('ufo').openAllFolds)
                 vim.keymap.set('n', 'zM', require('ufo').closeAllFolds)
+            end
+        },
 
-                require('ufo').setup()
+        {
+
+            'nvim-telescope/telescope-file-browser.nvim',
+            dependencies = {
+                'nvim-telescope/telescope.nvim',
+                'nvim-lua/plenary.nvim',
+            },
+            config = function()
+                require("telescope").load_extension "file_browser"
             end
         },
 
@@ -223,31 +223,24 @@ require("lazy").setup({
             tag = '0.1.8',
             dependencies = {
                 'nvim-lua/plenary.nvim',
-                'nvim-telescope/telescope-file-browser.nvim',
             },
-            config = function()
-                local builtin = require('telescope.builtin')
-
-                vim.keymap.set('n', '<leader>pf', builtin.find_files, {})
-                vim.keymap.set('n', '<C-p>', builtin.git_files, {})
-                vim.keymap.set('n', '<leader>ps', builtin.live_grep, {})
-                vim.keymap.set("n", "<space>fb", ":Telescope file_browser<CR>")
-
-                require("telescope").setup(
-                    {
-                        defaults = {
-                            layout_strategy = 'vertical',
-                            layout_config = {
-                                width = 90,
-                                height = 40,
-                                preview_cutoff = 0
-                            }
-                        }
-                    }
-                )
-
-                require("telescope").load_extension "file_browser"
-            end
+            opts = {
+                defaults = {
+                    layout_strategy = 'vertical',
+                    -- layout_config = {
+                    --     width = 90,
+                    --     height = 40,
+                    --     preview_cutoff = 0
+                    -- }
+                },
+            },
+            keys = {
+                { "<leader>pf", ":Telescope find_files<CR>",   mode = { "n" }, desc = "Telescope Find Files" },
+                { "<leader>ps", ":Telescope live_grep<CR>",    mode = { "n" }, desc = "Telescope Live Grep" },
+                { "<leader>fb", ":Telescope file_browser<CR>", mode = { "n" }, desc = "Telescope File Browser" },
+                { "<leader>pg", ":Telescope git_files<CR>",    mode = { "n" }, desc = "Telescope Git Files" },
+                { "<leader>b",  ":Telescope buffers<CR>",      mode = { "n" }, desc = "Telescope Buffers List" },
+            }
         },
 
         {
@@ -284,25 +277,6 @@ require("lazy").setup({
                     end,
                 })
 
-                local lzg      = Terminal:new({
-                    cmd = "lazygit",
-                    dir = "git_dir",
-                    direction = "float",
-                    float_opts = {
-                        border = "double",
-                    },
-                    -- function to run on opening the terminal
-                    on_open = function(term)
-                        vim.cmd("startinsert!")
-                        vim.api.nvim_buf_set_keymap(term.bufnr, "n", "q", "<cmd>close<CR>",
-                            { noremap = true, silent = true })
-                    end,
-                    -- function to run on closing the terminal
-                    on_close = function()
-                        vim.cmd("startinsert!")
-                    end,
-                })
-
                 vim.api.nvim_create_user_command(
                     "LzdToggle",
                     function()
@@ -311,16 +285,11 @@ require("lazy").setup({
                     {}
                 )
 
-                vim.api.nvim_create_user_command(
-                    "LzgToggle",
-                    function()
-                        lzg:toggle()
-                    end,
-                    {}
-                )
-
                 require('toggleterm').setup()
-            end
+            end,
+            keys = {
+                { "<C-\\>", "<Cmd>ToggleTerm<CR>", desc = "Toggle terminal", silent = true, mode = { "n", "t" } }
+            }
         },
 
         {
@@ -361,33 +330,61 @@ require("lazy").setup({
         {
             "folke/snacks.nvim",
             lazy = false,
+            ---@type snacks.Config
             opts = {
-                input = {
-                    enabled = true
+                input = {},
+                layout = {},
+                picker = {},
+                lazygit = {},
+                gitbrowse = {},
+                zen = {},
+                image = {},
+                dashboard = {
+                    preset = {
+                        header = [[
+  ██████    █████     █████ ███ █████  ██████      ██████   ██████   ████████  
+ ░░░░░███  ███░░     ░░███ ░███░░███  ███░░███    ███░░███ ░░░░░███ ░░███░░███ 
+  ███████ ░░█████     ░███ ░███ ░███ ░███████    ░███ ░░░   ███████  ░███ ░███ 
+ ███░░███  ░░░░███    ░░███████████  ░███░░░     ░███  ███ ███░░███  ░███ ░███ 
+░░████████ ██████      ░░████░████   ░░██████    ░░██████ ░░████████ ████ █████
+ ░░░░░░░░ ░░░░░░        ░░░░ ░░░░     ░░░░░░      ░░░░░░   ░░░░░░░░ ░░░░ ░░░░░ ]]
+                    },
+                    keys = {
+
+                    },
+                    sections = {
+                        { section = "header" },
+                        {
+                            section = "terminal",
+                            cmd = "chafa ~/.config/nvim/img/billy.jpg --size 60x18 --probe off; sleep .1",
+                            height = 17,
+                            padding = 3,
+                            align = "right"
+                        },
+                        { section = "keys", gap = 1, padding = 2 },
+                        {
+                            icon = " ",
+                            title = "Git Status",
+                            section = "terminal",
+                            enabled = function()
+                                return Snacks.git.get_root() ~= nil
+                            end,
+                            cmd = "git status --short --branch --renames",
+                            height = 5,
+                            ttl = 5 * 60,
+                            indent = 3,
+                        },
+                        { section = "startup" },
+                    },
                 },
-                layout = {
-                    enabled = true
-                },
-                picker = {
-                    enabled = true
-                },
-                lazygit = {
-                    enabled = true
-                },
-                gitbrowse = {
-                    enabled = true
-                },
-                zen = {
-                    enabled = true
-                },
-                image = {
-                    enabled = true
+                explorer = {
+                    replace_netrw = true
                 }
             },
             keys = {
-                { "lzg",        function() Snacks.lazygit() end,   desc = "Open lazygit" },
-                { "<leader>gB", function() Snacks.gitbrowse() end, desc = "Git Browse",     mode = { "n", "v" } },
-                { "<leader>z",  function() Snacks.zen() end,       desc = "Toggle Zen Mode" },
+                { "<leader>lzg", function() Snacks.lazygit() end,   desc = "Open lazygit" },
+                { "<leader>gB",  function() Snacks.gitbrowse() end, desc = "Git Browse",     mode = { "n", "v" } },
+                { "<leader>z",   function() Snacks.zen() end,       desc = "Toggle Zen Mode" },
             }
         },
 
